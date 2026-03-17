@@ -21,10 +21,10 @@ metadata:
   openclaw:
     emoji: "📊"
     homepage: "https://hyperliquid.xyz"
-    primaryEnv: "HL_PRIVATE_KEY"
+    primaryEnv: "HYPERLIQUID_WALLET_PRIVATE_KEY"
     requires:
       bins: ["hyperliquid-cli", "hyperliquid-mcp"]
-      env: ["HL_PRIVATE_KEY"]
+      env: ["HYPERLIQUID_WALLET_PRIVATE_KEY"]
     install:
       - id: "hyperliquid-cli-npm"
         kind: "npm"
@@ -34,10 +34,10 @@ metadata:
   clawdbot:
     emoji: "📊"
     homepage: "https://hyperliquid.xyz"
-    primaryEnv: "HL_PRIVATE_KEY"
+    primaryEnv: "HYPERLIQUID_WALLET_PRIVATE_KEY"
     requires:
       bins: ["hyperliquid-cli", "hyperliquid-mcp"]
-      env: ["HL_PRIVATE_KEY"]
+      env: ["HYPERLIQUID_WALLET_PRIVATE_KEY"]
     install:
       - id: "hyperliquid-cli-npm"
         kind: "npm"
@@ -90,8 +90,8 @@ The wallet address is automatically derived from your private key. Config is sav
 **Alternative: Environment Variables**
 
 ```bash
-export HL_PRIVATE_KEY=<your-private-key>
-export HL_WALLET_ADDRESS=<your-wallet-address>
+export HYPERLIQUID_WALLET_PRIVATE_KEY=<your-private-key>
+export HYPERLIQUID_WALLET_ADDRESS=<your-wallet-address>
 ```
 
 **Alternative: Manual Config**
@@ -353,9 +353,9 @@ Created with `0600` permissions (owner read/write only).
 
 | Variable | Description |
 |----------|-------------|
-| `HL_PRIVATE_KEY` | Private key (overrides config) |
-| `HL_WALLET_ADDRESS` | Wallet address (overrides config) |
-| `HL_SUB_ACCOUNT_ADDRESS` | Sub-account address |
+| `HYPERLIQUID_WALLET_PRIVATE_KEY` | Private key (overrides config) |
+| `HYPERLIQUID_WALLET_ADDRESS` | Wallet address (overrides config) |
+| `HYPERLIQUID_ENV` | `mainnet` or `testnet` (overrides config, default: `mainnet`) |
 
 ## Tips
 
@@ -391,7 +391,20 @@ claude mcp add hyperliquid-mcp -- hyperliquid-mcp
 
 25 tools: `get_all_mids`, `get_meta`, `get_ticker`, `get_orderbook`, `get_candles`, `get_funding`, `get_recent_trades`, `place_order`, `cancel_order`, `list_open_orders`, `get_order_status`, `get_order_history`, `get_user_fills`, `list_positions`, `update_leverage`, `get_account_state`, `get_spot_balances`, `get_portfolio`, `get_user_fees`, `get_rate_limit`, `get_sub_accounts`, `usd_send`, `spot_send`, `withdraw`, `usd_class_transfer`.
 
-Credentials are shared with the CLI — set up once with `hyperliquid-cli config init`.
+Credentials are shared with the CLI — set up once with `hyperliquid-cli config init`, or pass via environment variables in your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "hyperliquid": {
+      "command": "hyperliquid-mcp",
+      "env": {
+        "HYPERLIQUID_WALLET_PRIVATE_KEY": "0x..."
+      }
+    }
+  }
+}
+```
 
 ## Resources
 

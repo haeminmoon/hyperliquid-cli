@@ -72,8 +72,8 @@ hyperliquid-cli config set --env mainnet --private-key <hex-key>
 **Environment variables (CI/CD, Docker):**
 
 ```bash
-export HL_PRIVATE_KEY=<your-private-key>
-export HL_WALLET_ADDRESS=<your-wallet-address>
+export HYPERLIQUID_WALLET_PRIVATE_KEY=<your-private-key>
+export HYPERLIQUID_WALLET_ADDRESS=<your-wallet-address>
 ```
 
 **View current config:**
@@ -242,15 +242,32 @@ Or without global install:
 | **Account** | `get_account_state`, `get_spot_balances`, `get_portfolio`, `get_user_fees`, `get_rate_limit`, `get_sub_accounts` | Yes |
 | **Transfers** | `usd_send`, `spot_send`, `withdraw`, `usd_class_transfer` | Yes |
 
-### MCP Prerequisites
+### MCP Configuration
 
-Before using MCP tools that require authentication, set up credentials via the CLI:
+**Option 1: CLI setup (recommended)**
 
 ```bash
 hyperliquid-cli config init
 ```
 
 The MCP server reads the same config as the CLI (`~/.hyperliquid-cli/`).
+
+**Option 2: Environment variables in MCP config**
+
+Pass credentials directly in your MCP config file — no CLI setup needed:
+
+```json
+{
+  "mcpServers": {
+    "hyperliquid": {
+      "command": "hyperliquid-mcp",
+      "env": {
+        "HYPERLIQUID_WALLET_PRIVATE_KEY": "0x..."
+      }
+    }
+  }
+}
+```
 
 ---
 
@@ -350,9 +367,9 @@ Config uses `0600` permissions (owner read/write only). Private key is masked wh
 
 | Variable | Description |
 |----------|-------------|
-| `HL_PRIVATE_KEY` | Private key (overrides config file) |
-| `HL_WALLET_ADDRESS` | Wallet address (overrides config file) |
-| `HL_SUB_ACCOUNT_ADDRESS` | Sub-account address |
+| `HYPERLIQUID_WALLET_PRIVATE_KEY` | Private key (overrides config file) |
+| `HYPERLIQUID_WALLET_ADDRESS` | Wallet address (overrides config file) |
+| `HYPERLIQUID_ENV` | `mainnet` or `testnet` (default: `mainnet`) |
 
 ## Resources
 

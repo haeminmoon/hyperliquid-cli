@@ -177,9 +177,9 @@ Environment variables override the config file:
 
 | Variable | Description |
 |----------|-------------|
-| `HL_PRIVATE_KEY` | Private key (overrides config) |
-| `HL_WALLET_ADDRESS` | Wallet address (overrides config) |
-| `HL_SUB_ACCOUNT_ADDRESS` | Sub-account address |
+| `HYPERLIQUID_WALLET_PRIVATE_KEY` | Private key (overrides config) |
+| `HYPERLIQUID_WALLET_ADDRESS` | Wallet address (overrides config) |
+| `HYPERLIQUID_ENV` | `mainnet` or `testnet` (default: `mainnet`) |
 
 ## Security Best Practices
 

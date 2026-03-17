@@ -77,7 +77,7 @@ Two signing schemes:
 ## Configuration
 
 - **Config file path**: `~/.hyperliquid-cli/config.json` (mode 0o600)
-- **Environment variables**: `HL_PRIVATE_KEY`, `HL_WALLET_ADDRESS`, `HL_SUB_ACCOUNT_ADDRESS`
+- **Environment variables**: `HYPERLIQUID_WALLET_PRIVATE_KEY`, `HYPERLIQUID_WALLET_ADDRESS`, `HYPERLIQUID_ENV`, `HYPERLIQUID_SUB_ACCOUNT_ADDRESS`
 - **Priority**: config file → environment variables
 
 ```typescript

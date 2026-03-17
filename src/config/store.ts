@@ -47,11 +47,14 @@ export function saveConfig(partial: Partial<CliConfig>): void {
 
 export function getEffectiveConfig(): CliConfig {
   const disk = loadConfig();
+  const envVal = process.env.HYPERLIQUID_ENV;
+  const env: Environment =
+    envVal === 'testnet' ? 'testnet' : disk.env;
   return {
-    env: disk.env,
-    privateKey: disk.privateKey ?? process.env.HL_PRIVATE_KEY,
-    walletAddress: disk.walletAddress ?? process.env.HL_WALLET_ADDRESS,
-    subAccountAddress: disk.subAccountAddress ?? process.env.HL_SUB_ACCOUNT_ADDRESS,
+    env,
+    privateKey: disk.privateKey ?? process.env.HYPERLIQUID_WALLET_PRIVATE_KEY,
+    walletAddress: disk.walletAddress ?? process.env.HYPERLIQUID_WALLET_ADDRESS,
+    subAccountAddress: disk.subAccountAddress ?? process.env.HYPERLIQUID_SUB_ACCOUNT_ADDRESS,
   };
 }
 
