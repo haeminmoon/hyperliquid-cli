@@ -136,16 +136,24 @@ export class HyperliquidClient {
     return this.info({ type: 'allMids' }) as Promise<Record<string, string>>;
   }
 
-  async getMeta(): Promise<unknown> {
-    return this.info({ type: 'meta' });
+  async getMeta(dex?: string): Promise<unknown> {
+    const body: Record<string, unknown> = { type: 'meta' };
+    if (dex) body.dex = dex;
+    return this.info(body);
   }
 
-  async getMetaAndAssetCtxs(): Promise<unknown> {
-    return this.info({ type: 'metaAndAssetCtxs' });
+  async getMetaAndAssetCtxs(dex?: string): Promise<unknown> {
+    const body: Record<string, unknown> = { type: 'metaAndAssetCtxs' };
+    if (dex) body.dex = dex;
+    return this.info(body);
   }
 
   async getSpotMeta(): Promise<unknown> {
     return this.info({ type: 'spotMeta' });
+  }
+
+  async getPerpDexs(): Promise<unknown> {
+    return this.info({ type: 'perpDexs' });
   }
 
   async getSpotMetaAndAssetCtxs(): Promise<unknown> {

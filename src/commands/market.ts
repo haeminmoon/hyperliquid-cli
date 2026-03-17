@@ -4,6 +4,7 @@ import { output, getOutputFormat } from '../output/formatter';
 import { handleError } from '../output/error';
 import { CANDLE_INTERVALS, CandleInterval, INTERVAL_MS } from '../config/constants';
 import { parseIntStrict } from '../utils/helpers';
+import { parseCoinDex } from '../utils/asset';
 
 export function registerMarketCommands(program: Command): void {
   const marketCmd = program
@@ -15,13 +16,14 @@ export function registerMarketCommands(program: Command): void {
     .command('meta')
     .description('List all perpetual instruments')
     .option('--spot', 'Show spot metadata instead')
+    .option('--dex <name>', 'HIP-3 dex name (e.g., xyz)')
     .option('-o, --output <format>', 'Output format (table/json)', 'table')
     .action(async (options) => {
       try {
         const client = createPublicClient();
         const data = options.spot
           ? await client.getSpotMeta()
-          : await client.getMeta();
+          : await client.getMeta(options.dex);
         output(data, getOutputFormat(options));
       } catch (err) {
         handleError(err);
@@ -46,15 +48,16 @@ export function registerMarketCommands(program: Command): void {
   // market ticker
   marketCmd
     .command('ticker <coin>')
-    .description('Get ticker data for a coin (meta + asset context)')
+    .description('Get ticker data for a coin (meta + asset context). Use dex:coin format for HIP-3 (e.g., xyz:CL)')
     .option('--spot', 'Show spot ticker')
     .option('-o, --output <format>', 'Output format (table/json)', 'table')
     .action(async (coin: string, options) => {
       try {
         const client = createPublicClient();
+        const { dex } = parseCoinDex(coin);
         const data = options.spot
           ? await client.getSpotMetaAndAssetCtxs()
-          : await client.getMetaAndAssetCtxs();
+          : await client.getMetaAndAssetCtxs(dex);
 
         const arr = data as [
           { universe: Array<{ name: string }> },
@@ -67,7 +70,10 @@ export function registerMarketCommands(program: Command): void {
         );
 
         if (idx === -1) {
-          throw new Error(`Coin "${coin}" not found. Use "hyperliquid-cli market meta" to list available coins.`);
+          const hint = dex
+            ? `Use "hyperliquid-cli market meta --dex ${dex}" to list available coins.`
+            : 'Use "hyperliquid-cli market meta" to list available coins.';
+          throw new Error(`Coin "${coin}" not found. ${hint}`);
         }
 
         const result = {

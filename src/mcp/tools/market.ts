@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { createPublicClient, mcpText, withErrorHandling } from '../helpers';
 import { INTERVAL_MS, CandleInterval, CANDLE_INTERVALS } from '../../config/constants';
+import { parseCoinDex } from '../../utils/asset';
 
 export function registerMarketTools(server: McpServer): void {
   server.tool(
@@ -18,31 +19,35 @@ export function registerMarketTools(server: McpServer): void {
 
   server.tool(
     'get_meta',
-    'Get perpetual market metadata (instruments, max leverage, decimals)',
-    { spot: z.boolean().optional().describe('Get spot metadata instead') },
-    async ({ spot }) =>
+    'Get perpetual market metadata (instruments, max leverage, decimals). Use dex param for HIP-3 builder-deployed perps (e.g., "xyz")',
+    {
+      spot: z.boolean().optional().describe('Get spot metadata instead'),
+      dex: z.string().optional().describe('HIP-3 dex name (e.g., xyz) for builder-deployed perps'),
+    },
+    async ({ spot, dex }) =>
       withErrorHandling(async () => {
         const client = createPublicClient();
         const data = spot
           ? await client.getSpotMeta()
-          : await client.getMeta();
+          : await client.getMeta(dex);
         return mcpText(JSON.stringify(data, null, 2));
       }),
   );
 
   server.tool(
     'get_ticker',
-    'Get ticker data for a specific coin including price, volume, funding',
+    'Get ticker data for a specific coin including price, volume, funding. Use dex:coin format for HIP-3 (e.g., xyz:CL)',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH)'),
+      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
       spot: z.boolean().optional().describe('Get spot ticker'),
     },
     async ({ coin, spot }) =>
       withErrorHandling(async () => {
         const client = createPublicClient();
+        const { dex } = parseCoinDex(coin);
         const data = spot
           ? await client.getSpotMetaAndAssetCtxs()
-          : await client.getMetaAndAssetCtxs();
+          : await client.getMetaAndAssetCtxs(dex);
 
         const arr = data as [
           { universe: Array<{ name: string }> },

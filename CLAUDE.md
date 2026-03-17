@@ -72,6 +72,7 @@ Two signing schemes:
 ### Asset Index
 
 - **Perpetuals**: Array index in `meta.universe` (BTC=0, ETH=1, ...)
+- **HIP-3 perps**: Array index in dex-specific `meta.universe` with `dex` param (e.g., `xyz:CL` → dex="xyz")
 - **Spot**: `10000 + index` in `spotMeta.universe`
 
 ## Configuration
