@@ -178,7 +178,7 @@ export function registerConfigCommands(program: Command): void {
     .action((key: string) => {
       try {
         const config = getEffectiveConfig();
-        const value = (config as Record<string, unknown>)[key];
+        const value = (config as unknown as Record<string, unknown>)[key];
         if (value === undefined) {
           console.log(`Key "${key}" not found. Available: env, privateKey, walletAddress, subAccountAddress`);
         } else if (key === 'privateKey') {

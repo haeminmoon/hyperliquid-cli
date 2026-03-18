@@ -3,12 +3,14 @@ import { z } from 'zod';
 import { createAuthClient, mcpText, withErrorHandling } from '../helpers';
 
 export function registerTransferTools(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     'usd_send',
-    'Send USDC to another address on Hyperliquid',
     {
-      destination: z.string().describe('Destination address'),
-      amount: z.string().describe('Amount of USDC'),
+      description: 'Send USDC to another address on Hyperliquid',
+      inputSchema: z.object({
+        destination: z.string().describe('Destination address'),
+        amount: z.string().describe('Amount of USDC'),
+      }),
     },
     async ({ destination, amount }) =>
       withErrorHandling(async () => {
@@ -19,13 +21,15 @@ export function registerTransferTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'spot_send',
-    'Send a spot token to another address',
     {
-      destination: z.string().describe('Destination address'),
-      token: z.string().describe('Token identifier (e.g., PURR:0x...)'),
-      amount: z.string().describe('Amount to send'),
+      description: 'Send a spot token to another address',
+      inputSchema: z.object({
+        destination: z.string().describe('Destination address'),
+        token: z.string().describe('Token identifier (e.g., PURR:0x...)'),
+        amount: z.string().describe('Amount to send'),
+      }),
     },
     async ({ destination, token, amount }) =>
       withErrorHandling(async () => {
@@ -36,12 +40,14 @@ export function registerTransferTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'withdraw',
-    'Withdraw USDC to Arbitrum (~5 min finalization, $1 fee)',
     {
-      destination: z.string().describe('Destination address on Arbitrum'),
-      amount: z.string().describe('Amount of USDC'),
+      description: 'Withdraw USDC to Arbitrum (~5 min finalization, $1 fee)',
+      inputSchema: z.object({
+        destination: z.string().describe('Destination address on Arbitrum'),
+        amount: z.string().describe('Amount of USDC'),
+      }),
     },
     async ({ destination, amount }) =>
       withErrorHandling(async () => {
@@ -52,12 +58,14 @@ export function registerTransferTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'usd_class_transfer',
-    'Transfer USDC between spot and perpetuals accounts',
     {
-      amount: z.string().describe('Amount to transfer'),
-      to_perp: z.boolean().describe('true = spot->perp, false = perp->spot'),
+      description: 'Transfer USDC between spot and perpetuals accounts',
+      inputSchema: z.object({
+        amount: z.string().describe('Amount to transfer'),
+        to_perp: z.boolean().describe('true = spot->perp, false = perp->spot'),
+      }),
     },
     async ({ amount, to_perp }) =>
       withErrorHandling(async () => {

@@ -3,10 +3,12 @@ import { z } from 'zod';
 import { createAuthClient, mcpText, withErrorHandling } from '../helpers';
 
 export function registerAccountTools(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     'get_account_state',
-    'Get perpetual account state (positions, margin summary, balances)',
-    {},
+    {
+      description: 'Get perpetual account state (positions, margin summary, balances)',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();
@@ -16,10 +18,12 @@ export function registerAccountTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_spot_balances',
-    'Get spot token balances',
-    {},
+    {
+      description: 'Get spot token balances',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();
@@ -29,10 +33,12 @@ export function registerAccountTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_portfolio',
-    'Get portfolio summary with PnL history',
-    {},
+    {
+      description: 'Get portfolio summary with PnL history',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();
@@ -42,10 +48,12 @@ export function registerAccountTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_user_fees',
-    'Get fee schedule and current rates',
-    {},
+    {
+      description: 'Get fee schedule and current rates',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();
@@ -55,10 +63,12 @@ export function registerAccountTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_rate_limit',
-    'Get current rate limit status',
-    {},
+    {
+      description: 'Get current rate limit status',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();
@@ -68,10 +78,12 @@ export function registerAccountTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_sub_accounts',
-    'List sub-accounts',
-    {},
+    {
+      description: 'List sub-accounts',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();

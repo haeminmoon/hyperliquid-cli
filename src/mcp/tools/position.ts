@@ -4,10 +4,12 @@ import { createPublicClient, createAuthClient, mcpText, withErrorHandling } from
 import { resolveAssetIndex } from '../../utils/asset';
 
 export function registerPositionTools(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     'list_positions',
-    'List all open perpetual positions with PnL, leverage, and liquidation price',
-    {},
+    {
+      description: 'List all open perpetual positions with PnL, leverage, and liquidation price',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const auth = createAuthClient();
@@ -17,13 +19,15 @@ export function registerPositionTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'update_leverage',
-    'Update leverage for a perpetual asset',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH)'),
-      leverage: z.number().min(1).describe('Leverage value'),
-      isolated: z.boolean().optional().describe('Use isolated margin (default: cross)'),
+      description: 'Update leverage for a perpetual asset',
+      inputSchema: z.object({
+        coin: z.string().describe('Coin name (e.g., BTC, ETH)'),
+        leverage: z.number().min(1).describe('Leverage value'),
+        isolated: z.boolean().optional().describe('Use isolated margin (default: cross)'),
+      }),
     },
     async ({ coin, leverage, isolated }) =>
       withErrorHandling(async () => {

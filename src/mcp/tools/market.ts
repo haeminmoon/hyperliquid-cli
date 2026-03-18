@@ -5,10 +5,12 @@ import { INTERVAL_MS, CandleInterval, CANDLE_INTERVALS } from '../../config/cons
 import { parseCoinDex } from '../../utils/asset';
 
 export function registerMarketTools(server: McpServer): void {
-  server.tool(
+  server.registerTool(
     'get_all_mids',
-    'Get all mid prices for perpetual and spot assets on Hyperliquid',
-    {},
+    {
+      description: 'Get all mid prices for perpetual and spot assets on Hyperliquid',
+      inputSchema: z.object({}),
+    },
     async () =>
       withErrorHandling(async () => {
         const client = createPublicClient();
@@ -17,12 +19,15 @@ export function registerMarketTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_meta',
-    'Get perpetual market metadata (instruments, max leverage, decimals). Use dex param for HIP-3 builder-deployed perps (e.g., "xyz")',
     {
-      spot: z.boolean().optional().describe('Get spot metadata instead'),
-      dex: z.string().optional().describe('HIP-3 dex name (e.g., xyz) for builder-deployed perps'),
+      description:
+        'Get perpetual market metadata (instruments, max leverage, decimals). Use dex param for HIP-3 builder-deployed perps (e.g., "xyz")',
+      inputSchema: z.object({
+        spot: z.boolean().optional().describe('Get spot metadata instead'),
+        dex: z.string().optional().describe('HIP-3 dex name (e.g., xyz) for builder-deployed perps'),
+      }),
     },
     async ({ spot, dex }) =>
       withErrorHandling(async () => {
@@ -34,12 +39,15 @@ export function registerMarketTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_ticker',
-    'Get ticker data for a specific coin including price, volume, funding. Use dex:coin format for HIP-3 (e.g., xyz:CL)',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
-      spot: z.boolean().optional().describe('Get spot ticker'),
+      description:
+        'Get ticker data for a specific coin including price, volume, funding. Use dex:coin format for HIP-3 (e.g., xyz:CL)',
+      inputSchema: z.object({
+        coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
+        spot: z.boolean().optional().describe('Get spot ticker'),
+      }),
     },
     async ({ coin, spot }) =>
       withErrorHandling(async () => {
@@ -64,12 +72,14 @@ export function registerMarketTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_orderbook',
-    'Get L2 order book for a coin',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
-      depth: z.number().min(2).max(5).optional().describe('Significant figures (2-5)'),
+      description: 'Get L2 order book for a coin',
+      inputSchema: z.object({
+        coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
+        depth: z.number().min(2).max(5).optional().describe('Significant figures (2-5)'),
+      }),
     },
     async ({ coin, depth }) =>
       withErrorHandling(async () => {
@@ -80,13 +90,15 @@ export function registerMarketTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_candles',
-    'Get OHLCV candlestick data for a coin',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
-      interval: z.string().describe('Candle interval (1m, 5m, 15m, 1h, 4h, 1d, etc.)'),
-      count: z.number().min(1).max(5000).optional().describe('Number of candles (default 50)'),
+      description: 'Get OHLCV candlestick data for a coin',
+      inputSchema: z.object({
+        coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
+        interval: z.string().describe('Candle interval (1m, 5m, 15m, 1h, 4h, 1d, etc.)'),
+        count: z.number().min(1).max(5000).optional().describe('Number of candles (default 50)'),
+      }),
     },
     async ({ coin, interval, count }) =>
       withErrorHandling(async () => {
@@ -104,13 +116,15 @@ export function registerMarketTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_funding',
-    'Get funding rate history or predicted funding rates',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
-      hours: z.number().optional().describe('Hours to look back (default 24)'),
-      predicted: z.boolean().optional().describe('Get predicted funding instead'),
+      description: 'Get funding rate history or predicted funding rates',
+      inputSchema: z.object({
+        coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
+        hours: z.number().optional().describe('Hours to look back (default 24)'),
+        predicted: z.boolean().optional().describe('Get predicted funding instead'),
+      }),
     },
     async ({ coin, hours, predicted }) =>
       withErrorHandling(async () => {
@@ -128,10 +142,14 @@ export function registerMarketTools(server: McpServer): void {
       }),
   );
 
-  server.tool(
+  server.registerTool(
     'get_recent_trades',
-    'Get recent trades for a coin',
-    { coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)') },
+    {
+      description: 'Get recent trades for a coin',
+      inputSchema: z.object({
+        coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
+      }),
+    },
     async ({ coin }) =>
       withErrorHandling(async () => {
         const client = createPublicClient();
