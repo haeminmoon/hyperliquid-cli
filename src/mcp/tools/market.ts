@@ -68,13 +68,14 @@ export function registerMarketTools(server: McpServer): void {
     'get_orderbook',
     'Get L2 order book for a coin',
     {
-      coin: z.string().describe('Coin name (e.g., BTC, ETH)'),
+      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
       depth: z.number().min(2).max(5).optional().describe('Significant figures (2-5)'),
     },
     async ({ coin, depth }) =>
       withErrorHandling(async () => {
         const client = createPublicClient();
-        const data = await client.getL2Book(coin, depth);
+        const { dex } = parseCoinDex(coin);
+        const data = await client.getL2Book(coin, depth, undefined, dex);
         return mcpText(JSON.stringify(data, null, 2));
       }),
   );
@@ -83,7 +84,7 @@ export function registerMarketTools(server: McpServer): void {
     'get_candles',
     'Get OHLCV candlestick data for a coin',
     {
-      coin: z.string().describe('Coin name'),
+      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
       interval: z.string().describe('Candle interval (1m, 5m, 15m, 1h, 4h, 1d, etc.)'),
       count: z.number().min(1).max(5000).optional().describe('Number of candles (default 50)'),
     },
@@ -94,10 +95,11 @@ export function registerMarketTools(server: McpServer): void {
         }
 
         const client = createPublicClient();
+        const { dex } = parseCoinDex(coin);
         const n = count ?? 50;
         const endTime = Date.now();
         const startTime = endTime - n * (INTERVAL_MS[interval] ?? 3600000);
-        const data = await client.getCandleSnapshot(coin, interval as CandleInterval, startTime, endTime);
+        const data = await client.getCandleSnapshot(coin, interval as CandleInterval, startTime, endTime, dex);
         return mcpText(JSON.stringify(data, null, 2));
       }),
   );
@@ -106,7 +108,7 @@ export function registerMarketTools(server: McpServer): void {
     'get_funding',
     'Get funding rate history or predicted funding rates',
     {
-      coin: z.string().describe('Coin name'),
+      coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
       hours: z.number().optional().describe('Hours to look back (default 24)'),
       predicted: z.boolean().optional().describe('Get predicted funding instead'),
     },
@@ -117,10 +119,11 @@ export function registerMarketTools(server: McpServer): void {
           const data = await client.getPredictedFundings();
           return mcpText(JSON.stringify(data, null, 2));
         }
+        const { dex } = parseCoinDex(coin);
         const h = hours ?? 24;
         const endTime = Date.now();
         const startTime = endTime - h * 3600000;
-        const data = await client.getFundingHistory(coin, startTime, endTime);
+        const data = await client.getFundingHistory(coin, startTime, endTime, dex);
         return mcpText(JSON.stringify(data, null, 2));
       }),
   );
@@ -128,11 +131,12 @@ export function registerMarketTools(server: McpServer): void {
   server.tool(
     'get_recent_trades',
     'Get recent trades for a coin',
-    { coin: z.string().describe('Coin name') },
+    { coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)') },
     async ({ coin }) =>
       withErrorHandling(async () => {
         const client = createPublicClient();
-        const data = await client.getRecentTrades(coin);
+        const { dex } = parseCoinDex(coin);
+        const data = await client.getRecentTrades(coin, dex);
         return mcpText(JSON.stringify(data, null, 2));
       }),
   );

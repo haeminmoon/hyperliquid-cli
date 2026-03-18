@@ -160,10 +160,11 @@ export class HyperliquidClient {
     return this.info({ type: 'spotMetaAndAssetCtxs' });
   }
 
-  async getL2Book(coin: string, nSigFigs?: number, mantissa?: number): Promise<unknown> {
+  async getL2Book(coin: string, nSigFigs?: number, mantissa?: number, dex?: string): Promise<unknown> {
     const body: Record<string, unknown> = { type: 'l2Book', coin };
     if (nSigFigs !== undefined) body.nSigFigs = nSigFigs;
     if (mantissa !== undefined) body.mantissa = mantissa;
+    if (dex) body.dex = dex;
     return this.info(body);
   }
 
@@ -172,8 +173,9 @@ export class HyperliquidClient {
     interval: CandleInterval,
     startTime: number,
     endTime?: number,
+    dex?: string,
   ): Promise<unknown> {
-    return this.info({
+    const body: Record<string, unknown> = {
       type: 'candleSnapshot',
       req: {
         coin,
@@ -181,24 +183,30 @@ export class HyperliquidClient {
         startTime,
         endTime: endTime ?? nowMs(),
       },
-    });
+    };
+    if (dex) body.dex = dex;
+    return this.info(body);
   }
 
-  async getFundingHistory(coin: string, startTime: number, endTime?: number): Promise<unknown> {
-    return this.info({
+  async getFundingHistory(coin: string, startTime: number, endTime?: number, dex?: string): Promise<unknown> {
+    const body: Record<string, unknown> = {
       type: 'fundingHistory',
       coin,
       startTime,
       endTime: endTime ?? nowMs(),
-    });
+    };
+    if (dex) body.dex = dex;
+    return this.info(body);
   }
 
   async getPredictedFundings(): Promise<unknown> {
     return this.info({ type: 'predictedFundings' });
   }
 
-  async getRecentTrades(coin: string): Promise<unknown> {
-    return this.info({ type: 'recentTrades', coin });
+  async getRecentTrades(coin: string, dex?: string): Promise<unknown> {
+    const body: Record<string, unknown> = { type: 'recentTrades', coin };
+    if (dex) body.dex = dex;
+    return this.info(body);
   }
 
   // ─── User Info ──────────────────────────────────────────────────────

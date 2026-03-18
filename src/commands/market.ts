@@ -95,8 +95,9 @@ export function registerMarketCommands(program: Command): void {
     .action(async (coin: string, options) => {
       try {
         const client = createPublicClient();
+        const { dex } = parseCoinDex(coin);
         const nSigFigs = parseIntStrict(options.depth, 'depth');
-        const data = await client.getL2Book(coin, nSigFigs);
+        const data = await client.getL2Book(coin, nSigFigs, undefined, dex);
 
         if (getOutputFormat(options) === 'json') {
           output(data, 'json');
@@ -151,11 +152,13 @@ export function registerMarketCommands(program: Command): void {
         const msPerCandle = INTERVAL_MS[options.interval] ?? 3600000;
         const startTime = endTime - count * msPerCandle;
 
+        const { dex } = parseCoinDex(coin);
         const data = await client.getCandleSnapshot(
           coin,
           options.interval as CandleInterval,
           startTime,
           endTime,
+          dex,
         );
 
         if (getOutputFormat(options) === 'json') {
@@ -204,10 +207,11 @@ export function registerMarketCommands(program: Command): void {
           return;
         }
 
+        const { dex } = parseCoinDex(coin);
         const hours = parseIntStrict(options.hours, 'hours');
         const endTime = Date.now();
         const startTime = endTime - hours * 3600000;
-        const data = await client.getFundingHistory(coin, startTime, endTime);
+        const data = await client.getFundingHistory(coin, startTime, endTime, dex);
         output(data, getOutputFormat(options));
       } catch (err) {
         handleError(err);
@@ -222,7 +226,8 @@ export function registerMarketCommands(program: Command): void {
     .action(async (coin: string, options) => {
       try {
         const client = createPublicClient();
-        const data = await client.getRecentTrades(coin);
+        const { dex } = parseCoinDex(coin);
+        const data = await client.getRecentTrades(coin, dex);
         output(data, getOutputFormat(options));
       } catch (err) {
         handleError(err);

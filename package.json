@@ -1,6 +1,6 @@
 {
   "name": "@2oolkit/hyperliquid-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "CLI & MCP server for Hyperliquid DEX — trade perpetuals & spot, manage orders, and query market data",
   "author": "haeminmoon",
   "license": "MIT",
@@ -63,6 +63,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
