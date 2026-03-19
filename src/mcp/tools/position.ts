@@ -8,7 +8,6 @@ export function registerPositionTools(server: McpServer): void {
     'list_positions',
     {
       description: 'List all open perpetual positions with PnL, leverage, and liquidation price',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -23,11 +22,11 @@ export function registerPositionTools(server: McpServer): void {
     'update_leverage',
     {
       description: 'Update leverage for a perpetual asset',
-      inputSchema: z.object({
+      inputSchema: {
         coin: z.string().describe('Coin name (e.g., BTC, ETH)'),
         leverage: z.number().min(1).describe('Leverage value'),
         isolated: z.boolean().optional().describe('Use isolated margin (default: cross)'),
-      }),
+      },
     },
     async ({ coin, leverage, isolated }) =>
       withErrorHandling(async () => {

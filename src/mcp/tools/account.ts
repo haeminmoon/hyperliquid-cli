@@ -1,5 +1,4 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
 import { createAuthClient, mcpText, withErrorHandling } from '../helpers';
 
 export function registerAccountTools(server: McpServer): void {
@@ -7,7 +6,6 @@ export function registerAccountTools(server: McpServer): void {
     'get_account_state',
     {
       description: 'Get perpetual account state (positions, margin summary, balances)',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -22,7 +20,6 @@ export function registerAccountTools(server: McpServer): void {
     'get_spot_balances',
     {
       description: 'Get spot token balances',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -37,7 +34,6 @@ export function registerAccountTools(server: McpServer): void {
     'get_portfolio',
     {
       description: 'Get portfolio summary with PnL history',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -52,7 +48,6 @@ export function registerAccountTools(server: McpServer): void {
     'get_user_fees',
     {
       description: 'Get fee schedule and current rates',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -67,7 +62,6 @@ export function registerAccountTools(server: McpServer): void {
     'get_rate_limit',
     {
       description: 'Get current rate limit status',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -82,7 +76,6 @@ export function registerAccountTools(server: McpServer): void {
     'get_sub_accounts',
     {
       description: 'List sub-accounts',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {

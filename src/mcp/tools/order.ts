@@ -9,7 +9,7 @@ export function registerOrderTools(server: McpServer): void {
     'place_order',
     {
       description: 'Place an order on Hyperliquid (limit, market, stop-loss, take-profit)',
-      inputSchema: z.object({
+      inputSchema: {
         coin: z.string().describe('Coin name (e.g., BTC, ETH)'),
         side: z.enum(['buy', 'sell']).describe('Order side'),
         size: z.string().describe('Order size'),
@@ -19,7 +19,7 @@ export function registerOrderTools(server: McpServer): void {
         trigger_px: z.string().optional().describe('Trigger price for stop/TP orders'),
         tpsl: z.enum(['tp', 'sl']).optional().describe('TP or SL (when using trigger)'),
         cloid: z.string().optional().describe('Client order ID (128-bit hex)'),
-      }),
+      },
     },
     async (params) =>
       withErrorHandling(async () => {
@@ -56,10 +56,10 @@ export function registerOrderTools(server: McpServer): void {
     'cancel_order',
     {
       description: 'Cancel an order by its order ID',
-      inputSchema: z.object({
+      inputSchema: {
         coin: z.string().describe('Coin name'),
         oid: z.number().describe('Order ID'),
-      }),
+      },
     },
     async ({ coin, oid }) =>
       withErrorHandling(async () => {
@@ -76,7 +76,6 @@ export function registerOrderTools(server: McpServer): void {
     'list_open_orders',
     {
       description: 'List all open orders',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -91,9 +90,9 @@ export function registerOrderTools(server: McpServer): void {
     'get_order_status',
     {
       description: 'Get the status of a specific order',
-      inputSchema: z.object({
+      inputSchema: {
         oid: z.union([z.number(), z.string()]).describe('Order ID or client order ID'),
-      }),
+      },
     },
     async ({ oid }) =>
       withErrorHandling(async () => {
@@ -108,7 +107,6 @@ export function registerOrderTools(server: McpServer): void {
     'get_order_history',
     {
       description: 'List historical orders (max 2000)',
-      inputSchema: z.object({}),
     },
     async () =>
       withErrorHandling(async () => {
@@ -123,9 +121,9 @@ export function registerOrderTools(server: McpServer): void {
     'get_user_fills',
     {
       description: 'Get recent trade fills',
-      inputSchema: z.object({
+      inputSchema: {
         hours: z.number().optional().describe('Hours to look back'),
-      }),
+      },
     },
     async ({ hours }) =>
       withErrorHandling(async () => {
