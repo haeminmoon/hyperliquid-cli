@@ -1,6 +1,6 @@
 {
   "name": "@2oolkit/hyperliquid-cli",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "CLI & MCP server for Hyperliquid DEX — trade perpetuals & spot, manage orders, and query market data",
   "author": "haeminmoon",
   "license": "MIT",

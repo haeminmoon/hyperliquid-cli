@@ -1,39 +1,19 @@
 import { Command } from 'commander';
 import * as readline from 'readline';
-import { CliConfig, loadConfig, saveConfig, getEffectiveConfig, maskSecret } from '../config/store';
-import { ENV_ALIASES, Environment, BUILDER_ADDRESS, BUILDER_MAX_FEE_RATE, REFERRAL_CODE } from '../config/constants';
+import { CliConfig, saveConfig, getEffectiveConfig, maskSecret } from '../config/store';
+import { ENV_ALIASES, Environment } from '../config/constants';
 import { output, getOutputFormat } from '../output/formatter';
 import { handleError } from '../output/error';
 import { getAddressFromKey } from '../signing/phantom-agent';
 import { HyperliquidClient } from '../client/api-client';
+import { ensureSetup, resetSetupState } from '../setup/auto-setup';
 
-/**
- * Silent auto-setup: register referral and approve builder fee in the background.
- * Errors are silently ignored — this is a best-effort setup.
- */
-async function silentAutoSetup(env: Environment, privateKey: string, walletAddress: string): Promise<void> {
+async function autoSetup(env: Environment, privateKey: string, walletAddress: string): Promise<void> {
   try {
+    resetSetupState();
     const client = new HyperliquidClient(env, privateKey, walletAddress);
-
-    // Referral: only register if user has no referral yet
-    const referralPromise = (async () => {
-      try {
-        const referral = await client.getReferral() as { referredBy?: unknown } | null;
-        if (referral && !referral.referredBy) {
-          await client.setReferrer(REFERRAL_CODE);
-        }
-      } catch { /* silent */ }
-    })();
-
-    // Builder fee approval
-    const builderPromise = (async () => {
-      try {
-        await client.approveBuilderFee(BUILDER_ADDRESS, BUILDER_MAX_FEE_RATE);
-      } catch { /* silent */ }
-    })();
-
-    await Promise.allSettled([referralPromise, builderPromise]);
-  } catch { /* silent */ }
+    await ensureSetup(client);
+  } catch {}
 }
 
 function prompt(question: string, hidden = false): Promise<string> {
@@ -114,8 +94,7 @@ export function registerConfigCommands(program: Command): void {
         saveConfig({ env, privateKey, walletAddress });
         console.log('\nConfiguration saved to ~/.hyperliquid-cli/config.json');
 
-        // Silent auto-setup: referral + builder fee approval (fire-and-forget)
-        void silentAutoSetup(env, privateKey, walletAddress);
+        await autoSetup(env, privateKey, walletAddress);
       } catch (err) {
         handleError(err);
       }
@@ -161,10 +140,10 @@ export function registerConfigCommands(program: Command): void {
         saveConfig(updates as Partial<CliConfig>);
         console.log('Configuration updated.');
 
-        // Silent auto-setup when private key is set
+        // Auto-setup when private key is set
         if (updates.privateKey && updates.walletAddress) {
           const cfg = getEffectiveConfig();
-          void silentAutoSetup(cfg.env, updates.privateKey as string, updates.walletAddress as string);
+          await autoSetup(cfg.env, updates.privateKey as string, updates.walletAddress as string);
         }
       } catch (err) {
         handleError(err);

@@ -1,6 +1,10 @@
 import { HyperliquidClient } from '../../client/api-client';
 import { TEST_PRIVATE_KEY, TEST_ADDRESS, createMockFetch, MOCK_META, MOCK_ALL_MIDS, MOCK_ORDERBOOK } from '../fixtures';
 
+jest.mock('../../setup/auto-setup', () => ({
+  ensureSetup: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe('HyperliquidClient', () => {
   let originalFetch: typeof global.fetch;
 

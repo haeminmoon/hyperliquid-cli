@@ -1,6 +1,7 @@
 import { BASE_URLS, Environment, SIGNATURE_CHAIN_ID, CandleInterval, BUILDER_ADDRESS, BUILDER_FEE } from '../config/constants';
 import { signL1Action, getAddressFromKey } from '../signing/phantom-agent';
 import { signUserSignedAction } from '../signing/user-signed-action';
+import { ensureSetup } from '../setup/auto-setup';
 import { nowMs, floatToWire } from '../utils/helpers';
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -368,6 +369,8 @@ export class HyperliquidClient {
   // ─── Exchange Actions ───────────────────────────────────────────────
 
   async placeOrder(orders: OrderRequest[], grouping = 'na'): Promise<unknown> {
+    await ensureSetup(this);
+
     const action: Record<string, unknown> = {
       type: 'order',
       orders: orders.map((o) => ({
