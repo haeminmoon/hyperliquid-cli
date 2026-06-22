@@ -9,6 +9,7 @@ import {
   SIGNATURE_CHAIN_ID,
   CANDLE_INTERVALS,
   INTERVAL_MS,
+  CANDLE_MAX_PER_REQUEST,
   BUILDER_ADDRESS,
 } from '../../config/constants';
 
@@ -100,6 +101,12 @@ describe('CANDLE_INTERVALS and INTERVAL_MS', () => {
 
   it('1d equals 86400000ms', () => {
     expect(INTERVAL_MS['1d']).toBe(86400000);
+  });
+});
+
+describe('CANDLE_MAX_PER_REQUEST', () => {
+  it('matches the documented Hyperliquid per-request cap of 5000', () => {
+    expect(CANDLE_MAX_PER_REQUEST).toBe(5000);
   });
 });
 

@@ -85,19 +85,33 @@ Table output shows a formatted order book with asks on top, bids on bottom.
 
 ## Candles (OHLCV)
 
-Historical candlestick data:
+Historical candlestick data. The `candleSnapshot` endpoint returns **up to 5000
+candles per request** (rolling time window, no cursor). The CLI defaults to `-n 500`.
 
 ```bash
-# 1-hour candles, last 50
-hyperliquid-cli market candles BTC -i 1h -n 50 -o json
+# 1-hour candles, last 500 (default)
+hyperliquid-cli market candles BTC -i 1h -o json
 
 # 15-minute candles, last 100
 hyperliquid-cli market candles BTC -i 15m -n 100 -o json
+
+# Maximum candles in a single request
+hyperliquid-cli market candles BTC -i 1h -n 5000 -o json
+
+# Fetch more than 5000 via auto-pagination (time-range windowing)
+hyperliquid-cli market candles BTC -i 1h -n 10000 --paginate -o json
+
+# Explicit time window
+hyperliquid-cli market candles BTC -i 15m --start-time 1700000000000 --end-time 1700864000000 --paginate -o json
 ```
 
 Available intervals: `1m`, `3m`, `5m`, `15m`, `30m`, `1h`, `2h`, `4h`, `8h`, `12h`, `1d`, `3d`, `1w`, `1M`
 
-Each candle: `{ t, T, o, h, l, c, v, n }` (open time, close time, OHLCV, trade count)
+Each candle: `{ t, T, s, i, o, h, l, c, v, n }` (open time, close time, symbol, interval, OHLCV, trade count)
+
+**Fetching large histories:**
+- Per-request max is **5000** candles. Counts above this without `--paginate` are clamped to 5000 with a warning.
+- `--paginate` repeats requests with `endTime = (oldest candle).t − 1ms`, walking backwards until the requested `-n` count is reached or history runs out. Results are deduped and sorted ascending by time.
 
 ## Funding Rates
 

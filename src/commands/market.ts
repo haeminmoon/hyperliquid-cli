@@ -2,7 +2,12 @@ import { Command } from 'commander';
 import { createPublicClient } from './_helpers';
 import { output, getOutputFormat } from '../output/formatter';
 import { handleError } from '../output/error';
-import { CANDLE_INTERVALS, CandleInterval, INTERVAL_MS } from '../config/constants';
+import {
+  CANDLE_INTERVALS,
+  CandleInterval,
+  INTERVAL_MS,
+  CANDLE_MAX_PER_REQUEST,
+} from '../config/constants';
 import { parseIntStrict } from '../utils/helpers';
 import { parseCoinDex } from '../utils/asset';
 
@@ -130,13 +135,21 @@ export function registerMarketCommands(program: Command): void {
   // market candles
   marketCmd
     .command('candles <coin>')
-    .description('Get OHLCV candlestick data')
+    .description(
+      `Get OHLCV candlestick data. Up to ${CANDLE_MAX_PER_REQUEST} candles per request; use --paginate to fetch more via time-range windowing.`,
+    )
     .option(
       '-i, --interval <interval>',
       `Candle interval (${CANDLE_INTERVALS.join(', ')})`,
       '1h',
     )
-    .option('-n, --count <number>', 'Number of candles', '50')
+    .option('-n, --count <number>', 'Number of candles', '500')
+    .option(
+      '--paginate',
+      `Auto-paginate (walk backwards by time) to fetch more than ${CANDLE_MAX_PER_REQUEST} candles`,
+    )
+    .option('--start-time <ms>', 'Window start (Unix ms). Overrides count-based start.')
+    .option('--end-time <ms>', 'Window end (Unix ms). Defaults to now.')
     .option('-o, --output <format>', 'Output format (table/json)', 'table')
     .action(async (coin: string, options) => {
       try {
@@ -147,19 +160,54 @@ export function registerMarketCommands(program: Command): void {
         }
 
         const client = createPublicClient();
-        const endTime = Date.now();
-        const count = parseIntStrict(options.count, 'count');
-        const msPerCandle = INTERVAL_MS[options.interval] ?? 3600000;
-        const startTime = endTime - count * msPerCandle;
+        const interval = options.interval as CandleInterval;
+        const msPerCandle = INTERVAL_MS[interval] ?? 3600000;
+
+        let count = parseIntStrict(options.count, 'count');
+        if (count < 1) {
+          throw new Error(`Invalid count: must be at least 1 (got ${count})`);
+        }
+
+        const endTime = options.endTime
+          ? parseIntStrict(options.endTime, 'end-time')
+          : Date.now();
+        const startTime = options.startTime
+          ? parseIntStrict(options.startTime, 'start-time')
+          : endTime - count * msPerCandle;
+
+        if (startTime >= endTime) {
+          throw new Error('start-time must be earlier than end-time');
+        }
 
         const { dex } = parseCoinDex(coin);
-        const data = await client.getCandleSnapshot(
-          coin,
-          options.interval as CandleInterval,
-          startTime,
-          endTime,
-          dex,
-        );
+
+        // Clamp a too-large single request gracefully; auto-paginate instead
+        // when --paginate is set.
+        if (count > CANDLE_MAX_PER_REQUEST && !options.paginate) {
+          console.warn(
+            `Warning: count ${count} exceeds the per-request max of ${CANDLE_MAX_PER_REQUEST}. ` +
+              `Clamping to ${CANDLE_MAX_PER_REQUEST}. Use --paginate to fetch more.`,
+          );
+          count = CANDLE_MAX_PER_REQUEST;
+        }
+
+        const data =
+          options.paginate || count > CANDLE_MAX_PER_REQUEST
+            ? await client.getCandleSnapshotPaginated(
+                coin,
+                interval,
+                startTime,
+                endTime,
+                count,
+                dex,
+              )
+            : await client.getCandleSnapshot(
+                coin,
+                interval,
+                startTime,
+                endTime,
+                dex,
+              );
 
         if (getOutputFormat(options) === 'json') {
           output(data, 'json');

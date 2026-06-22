@@ -1,4 +1,4 @@
-import { BASE_URLS, Environment, SIGNATURE_CHAIN_ID, CandleInterval, BUILDER_ADDRESS, BUILDER_FEE } from '../config/constants';
+import { BASE_URLS, Environment, SIGNATURE_CHAIN_ID, CandleInterval, BUILDER_ADDRESS, BUILDER_FEE, CANDLE_MAX_PER_REQUEST } from '../config/constants';
 import { signL1Action, getAddressFromKey } from '../signing/phantom-agent';
 import { signUserSignedAction } from '../signing/user-signed-action';
 import { ensureSetup } from '../setup/auto-setup';
@@ -169,13 +169,17 @@ export class HyperliquidClient {
     return this.info(body);
   }
 
+  /**
+   * Fetch a single candle snapshot. The endpoint returns at most
+   * CANDLE_MAX_PER_REQUEST (5000) candles per request within [startTime, endTime].
+   */
   async getCandleSnapshot(
     coin: string,
     interval: CandleInterval,
     startTime: number,
     endTime?: number,
     dex?: string,
-  ): Promise<unknown> {
+  ): Promise<Candle[]> {
     const body: Record<string, unknown> = {
       type: 'candleSnapshot',
       req: {
@@ -186,7 +190,69 @@ export class HyperliquidClient {
       },
     };
     if (dex) body.dex = dex;
-    return this.info(body);
+    return this.info(body) as Promise<Candle[]>;
+  }
+
+  /**
+   * Fetch up to `maxTotal` candles via time-range windowing.
+   *
+   * Hyperliquid's candleSnapshot has no cursor and caps each request at
+   * CANDLE_MAX_PER_REQUEST (5000) candles. To collect more, we repeat the
+   * request walking backwards in time: each page keeps the same `startTime`
+   * but sets `endTime = (oldest candle returned).t - 1ms`, until we have
+   * `maxTotal` candles, the window is exhausted, or a page returns nothing.
+   *
+   * Results are de-duplicated by open time (`t`), sorted ascending by time,
+   * and truncated to the most recent `maxTotal` candles.
+   */
+  async getCandleSnapshotPaginated(
+    coin: string,
+    interval: CandleInterval,
+    startTime: number,
+    endTime: number,
+    maxTotal: number,
+    dex?: string,
+  ): Promise<Candle[]> {
+    const byTime = new Map<number, Candle>();
+    let windowEnd = endTime;
+
+    // Hard cap on iterations to avoid runaway loops; each page yields up to
+    // CANDLE_MAX_PER_REQUEST candles, so this comfortably covers maxTotal.
+    const maxPages = Math.ceil(maxTotal / CANDLE_MAX_PER_REQUEST) + 2;
+
+    for (let page = 0; page < maxPages; page++) {
+      if (windowEnd <= startTime) break;
+
+      const batch = await this.getCandleSnapshot(
+        coin,
+        interval,
+        startTime,
+        windowEnd,
+        dex,
+      );
+      if (!Array.isArray(batch) || batch.length === 0) break;
+
+      let oldest = windowEnd;
+      let added = 0;
+      for (const candle of batch) {
+        if (!byTime.has(candle.t)) {
+          byTime.set(candle.t, candle);
+          added++;
+        }
+        if (candle.t < oldest) oldest = candle.t;
+      }
+
+      if (byTime.size >= maxTotal) break;
+      // No new candles or no further window to walk into → exhausted.
+      if (added === 0 || oldest <= startTime) break;
+
+      // Walk backwards: next window ends just before the oldest candle seen.
+      windowEnd = oldest - 1;
+    }
+
+    const sorted = Array.from(byTime.values()).sort((a, b) => a.t - b.t);
+    // Keep the most recent `maxTotal` candles (never exceed requested count).
+    return sorted.length > maxTotal ? sorted.slice(sorted.length - maxTotal) : sorted;
   }
 
   async getFundingHistory(coin: string, startTime: number, endTime?: number, dex?: string): Promise<unknown> {
@@ -625,6 +691,20 @@ export class HyperliquidClient {
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────
+
+/** OHLCV candle as returned by the candleSnapshot endpoint. */
+export interface Candle {
+  t: number; // open time (ms)
+  T: number; // close time (ms)
+  s: string; // coin symbol
+  i: string; // interval
+  o: string; // open
+  c: string; // close
+  h: string; // high
+  l: string; // low
+  v: string; // volume
+  n: number; // number of trades
+}
 
 export interface OrderType {
   limit?: { tif: 'Gtc' | 'Alo' | 'Ioc' };

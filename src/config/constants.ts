@@ -60,6 +60,13 @@ export const BUILDER_FEE = 1;
 export const BUILDER_MAX_FEE_RATE = "0.1%";
 export const REFERRAL_CODE = "MOON333";
 
+/**
+ * Maximum number of candles the Hyperliquid `candleSnapshot` endpoint returns
+ * in a single request (rolling window). To fetch more, paginate by time-range
+ * windowing (walk backwards via endTime). See getCandleSnapshotPaginated().
+ */
+export const CANDLE_MAX_PER_REQUEST = 5000;
+
 export const INTERVAL_MS: Record<string, number> = {
   "1m": 60000,
   "3m": 180000,

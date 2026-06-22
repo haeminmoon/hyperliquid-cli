@@ -97,11 +97,35 @@ hyperliquid-cli market ticker BTC                  # Price, volume, funding, OI
 hyperliquid-cli market ticker BTC --spot           # Spot ticker
 hyperliquid-cli market orderbook BTC               # L2 order book
 hyperliquid-cli market orderbook BTC -d 3          # 3 sig figs depth
-hyperliquid-cli market candles BTC -i 1h -n 50     # OHLCV candles
+hyperliquid-cli market candles BTC -i 1h -n 500    # OHLCV candles (default 500)
+hyperliquid-cli market candles BTC -i 1h -n 5000   # Up to 5000 in one request
+hyperliquid-cli market candles BTC -i 1h -n 10000 --paginate  # Auto-paginate for more
 hyperliquid-cli market funding BTC --hours 24      # Funding rate history
 hyperliquid-cli market funding BTC --predicted     # Predicted funding rates
 hyperliquid-cli market trades BTC                  # Recent trades
 ```
+
+**Candles (OHLCV):**
+
+The `candleSnapshot` endpoint returns **up to 5000 candles per request** (rolling
+time window, no cursor). The CLI defaults to `-n 500`.
+
+```bash
+hyperliquid-cli market candles BTC -i 1h -n 5000 -o json    # Max in a single request
+hyperliquid-cli market candles BTC -i 1h -n 10000 --paginate -o json  # Fetch more via auto-pagination
+hyperliquid-cli market candles BTC -i 15m --start-time 1700000000000 --end-time 1700864000000 --paginate -o json
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-i, --interval <interval>` | One of `1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 8h, 12h, 1d, 3d, 1w, 1M` | `1h` |
+| `-n, --count <number>` | Number of candles to fetch | `500` |
+| `--paginate` | Auto-paginate (walk backwards by time) to fetch more than 5000 candles | `false` |
+| `--start-time <ms>` | Window start (Unix ms); overrides the count-based start | — |
+| `--end-time <ms>` | Window end (Unix ms) | now |
+
+- If `-n` exceeds 5000 **without** `--paginate`, the count is clamped to 5000 with a warning.
+- With `--paginate`, requests are repeated with `endTime = (oldest candle).t − 1ms` until the requested count is reached or history is exhausted; results are deduped and sorted ascending by time.
 
 #### Orders (auth required)
 

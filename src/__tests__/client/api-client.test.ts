@@ -112,6 +112,77 @@ describe('HyperliquidClient', () => {
       expect(body.req.coin).toBe('xyz:CL');
     });
 
+    it('getCandleSnapshotPaginated walks backwards and dedupes/sorts', async () => {
+      // interval 1h → 3600000ms. Build two pages of candles.
+      const H = 3600000;
+      const base = 1_000_000_000_000;
+      // Page boundaries are driven by endTime each call returns. We simulate
+      // a fetch that returns the next 3 older candles relative to the request
+      // endTime, so pagination must walk backwards.
+      const makeCandle = (t: number) => ({ t, T: t + H, o: '1', c: '1', h: '1', l: '1', v: '1', n: 1 });
+
+      // First request (endTime = base + 10*H): newest 3 candles.
+      // Second request (endTime = oldest-1): next 3 older candles.
+      const page1 = [base + 8 * H, base + 9 * H, base + 10 * H].map(makeCandle);
+      const page2 = [base + 5 * H, base + 6 * H, base + 7 * H].map(makeCandle);
+      const page3 = [base + 5 * H].map(makeCandle); // overlap → fully deduped, no progress
+
+      const fetchMock = jest
+        .fn()
+        .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(page1), text: () => Promise.resolve('') })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(page2), text: () => Promise.resolve('') })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(page3), text: () => Promise.resolve('') });
+      global.fetch = fetchMock;
+
+      const client = new HyperliquidClient('mainnet');
+      const result = await client.getCandleSnapshotPaginated(
+        'BTC',
+        '1h',
+        base,
+        base + 10 * H,
+        100,
+      );
+
+      // 6 unique candles collected, sorted ascending, deduped.
+      expect(result.map((c) => c.t)).toEqual([
+        base + 5 * H,
+        base + 6 * H,
+        base + 7 * H,
+        base + 8 * H,
+        base + 9 * H,
+        base + 10 * H,
+      ]);
+
+      // Second call must have endTime just before the oldest from page1.
+      const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body);
+      expect(secondBody.req.endTime).toBe(base + 8 * H - 1);
+      expect(secondBody.req.startTime).toBe(base);
+    });
+
+    it('getCandleSnapshotPaginated never exceeds maxTotal', async () => {
+      const H = 3600000;
+      const base = 1_000_000_000_000;
+      const makeCandle = (t: number) => ({ t, T: t + H, o: '1', c: '1', h: '1', l: '1', v: '1', n: 1 });
+      const candles = Array.from({ length: 10 }, (_, i) => makeCandle(base + i * H));
+
+      global.fetch = createMockFetch(candles);
+      const client = new HyperliquidClient('mainnet');
+      const result = await client.getCandleSnapshotPaginated('BTC', '1h', base, base + 10 * H, 4);
+
+      // Truncated to most-recent 4.
+      expect(result).toHaveLength(4);
+      expect(result.map((c) => c.t)).toEqual([base + 6 * H, base + 7 * H, base + 8 * H, base + 9 * H]);
+    });
+
+    it('getCandleSnapshotPaginated stops on empty page', async () => {
+      global.fetch = createMockFetch([]);
+      const client = new HyperliquidClient('mainnet');
+      const result = await client.getCandleSnapshotPaginated('BTC', '1h', 1000, 2000, 5000);
+      expect(result).toEqual([]);
+      // Only one request issued before bailing out.
+      expect((global.fetch as jest.Mock).mock.calls).toHaveLength(1);
+    });
+
     it('getFundingHistory includes dex parameter', async () => {
       global.fetch = createMockFetch([]);
       const client = new HyperliquidClient('mainnet');

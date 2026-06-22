@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { createPublicClient, mcpText, withErrorHandling } from '../helpers';
-import { INTERVAL_MS, CandleInterval, CANDLE_INTERVALS } from '../../config/constants';
+import { INTERVAL_MS, CandleInterval, CANDLE_INTERVALS, CANDLE_MAX_PER_REQUEST } from '../../config/constants';
 import { parseCoinDex } from '../../utils/asset';
 
 export function registerMarketTools(server: McpServer): void {
@@ -92,14 +92,23 @@ export function registerMarketTools(server: McpServer): void {
   server.registerTool(
     'get_candles',
     {
-      description: 'Get OHLCV candlestick data for a coin',
+      description: `Get OHLCV candlestick data for a coin. The candleSnapshot endpoint returns at most ${CANDLE_MAX_PER_REQUEST} candles per request (rolling window); for larger history, call repeatedly walking backwards in time (set the window's end just before the oldest candle returned). Intervals: ${CANDLE_INTERVALS.join(', ')}.`,
       inputSchema: {
         coin: z.string().describe('Coin name (e.g., BTC, ETH, xyz:CL for HIP-3)'),
         interval: z.string().describe('Candle interval (1m, 5m, 15m, 1h, 4h, 1d, etc.)'),
-        count: z.number().min(1).max(5000).optional().describe('Number of candles (default 50)'),
+        count: z
+          .number()
+          .min(1)
+          .max(CANDLE_MAX_PER_REQUEST)
+          .optional()
+          .describe(`Number of candles (default 500, max ${CANDLE_MAX_PER_REQUEST} per request)`),
+        endTime: z
+          .number()
+          .optional()
+          .describe('Window end in Unix ms (defaults to now). Use to page backwards for more history.'),
       },
     },
-    async ({ coin, interval, count }) =>
+    async ({ coin, interval, count, endTime: endTimeArg }) =>
       withErrorHandling(async () => {
         if (!CANDLE_INTERVALS.includes(interval as CandleInterval)) {
           return mcpText(`Invalid interval "${interval}". Use: ${CANDLE_INTERVALS.join(', ')}`);
@@ -107,8 +116,8 @@ export function registerMarketTools(server: McpServer): void {
 
         const client = createPublicClient();
         const { dex } = parseCoinDex(coin);
-        const n = count ?? 50;
-        const endTime = Date.now();
+        const n = count ?? 500;
+        const endTime = endTimeArg ?? Date.now();
         const startTime = endTime - n * (INTERVAL_MS[interval] ?? 3600000);
         const data = await client.getCandleSnapshot(coin, interval as CandleInterval, startTime, endTime, dex);
         return mcpText(JSON.stringify(data, null, 2));

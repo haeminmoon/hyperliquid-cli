@@ -142,7 +142,7 @@ These commands work without login. Use them for price checks, instrument discove
 | `hyperliquid-cli market ticker <coin> --spot` | Spot ticker |
 | `hyperliquid-cli market orderbook <coin>` | L2 order book |
 | `hyperliquid-cli market orderbook <coin> -d 3` | Order book with 3 sig figs |
-| `hyperliquid-cli market candles <coin> -i 1h -n 50` | OHLCV candles |
+| `hyperliquid-cli market candles <coin> -i 1h -n 500` | OHLCV candles (up to 5000/request; `--paginate` for more) |
 | `hyperliquid-cli market funding <coin> --hours 24` | Funding rate history |
 | `hyperliquid-cli market funding <coin> --predicted` | Predicted funding rates |
 | `hyperliquid-cli market trades <coin>` | Recent trades |

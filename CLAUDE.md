@@ -75,6 +75,14 @@ Two signing schemes:
 - **HIP-3 perps**: Array index in dex-specific `meta.universe` with `dex` param (e.g., `xyz:CL` → dex="xyz")
 - **Spot**: `10000 + index` in `spotMeta.universe`
 
+### Candles (`/info` `candleSnapshot`)
+
+- Body: `{ type: "candleSnapshot", req: { coin, interval, startTime, endTime }, dex? }`.
+- **Returns at most `CANDLE_MAX_PER_REQUEST` (5000) candles per request** (rolling time window, no cursor).
+- All 14 intervals exposed via `CANDLE_INTERVALS` / `INTERVAL_MS` (constants.ts): `1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 8h, 12h, 1d, 3d, 1w, 1M`.
+- **Pagination (time-range windowing)**: to fetch more than 5000, repeat the request keeping the same `startTime` but setting `endTime = (oldest candle returned).t − 1ms`, walking backwards until the requested count is reached or history is exhausted; dedupe by open time `t` and sort ascending. Implemented in `client.getCandleSnapshotPaginated(coin, interval, startTime, endTime, maxTotal, dex?)`.
+- CLI: `market candles <coin> -i <interval> -n <count>` (default `-n 500`); `--paginate` to exceed 5000; `--start-time`/`--end-time` for explicit windows. Counts >5000 without `--paginate` are clamped to 5000 with a warning. MCP `get_candles` caps `count` at 5000 per request and accepts an `endTime` arg to page backwards.
+
 ## Configuration
 
 - **Config file path**: `~/.hyperliquid-cli/config.json` (mode 0o600)
